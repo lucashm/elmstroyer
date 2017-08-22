@@ -30,5 +30,5 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Sub.map Msg.KeyboardMsg Keyboard.Extra.subscriptions
-        , Time.every second Msg.Tick
+        , Time.every (50*millisecond) Msg.Tick
         ]

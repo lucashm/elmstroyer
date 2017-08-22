@@ -1,9 +1,11 @@
 module Msg exposing (..)
 import Model
 import Collage exposing (..)
+import Element exposing (..)
 import Keyboard.Extra exposing (Key(..))
 import Time exposing (..)
 import List exposing (..)
+import Color exposing (red)
 
 
 type alias Model =
@@ -16,7 +18,8 @@ type Msg
     | MovePlayerHorizontal Float
     | UpdatePlayerPosition Float
     | Tick Time
-    | MoveShots
+    | MoveShoots
+    | Fire Float
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -75,14 +78,23 @@ update msg model =
                 [ CharD ] ->
                     update (MovePlayerHorizontal 20) model
 
+                [ Space ] ->
+                    update (Fire model.playerPosition) model
+
                 _ ->
                       ( model, Cmd.none )
 
         Tick newTime ->
-            update MoveShots { model | time = newTime }
+            update MoveShoots { model | time = newTime }
 
-        MoveShots ->
+        MoveShoots ->
             let
-              newShots = (moveY 20 model.shots)
+              newShoots = map (moveY 20) model.shoots
             in
-              ({model | shots = newShots}, Cmd.none)
+              ( {model | shoots = newShoots }, Cmd.none)
+
+        Fire position ->
+            let
+                newFire = Collage.move ( position, -200 ) (Collage.filled red (Collage.rect 2 30))
+            in
+              ( { model | shoots = ( append model.shoots [ newFire ] ) }, Cmd.none )
