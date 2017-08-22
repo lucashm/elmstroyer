@@ -1,7 +1,6 @@
 module Msg exposing (..)
 import Model
 import Collage exposing (..)
-import Element exposing (..)
 import Keyboard.Extra exposing (Key(..))
 import Time exposing (..)
 import List exposing (..)
@@ -18,8 +17,7 @@ type Msg
     | MovePlayerHorizontal Float
     | UpdatePlayerPosition Float
     | Tick Time
-    | MoveShoots
-    | Fire Float
+    | Fire Float Bool
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -61,40 +59,73 @@ update msg model =
         UpdatePlayerPosition deslocation ->
           let
             newModel = model.playerPosition + deslocation
+            isShooting = getShooting
           in
-          ({model | playerPosition = newModel}, Cmd.none)
+            update ( Fire model.playerPosition ( isShooting model.pressedKeys ) ) {model | playerPosition = newModel}
 
         KeyboardMsg keyMsg ->
-            let
-              pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys
-            in
-              case pressedKeys of
-                [ CharR ] ->
-                    update (RotatePlayer (degrees 30)) model
-
-                [ CharA ] ->
-                    update (MovePlayerHorizontal -20) model
-
-                [ CharD ] ->
-                    update (MovePlayerHorizontal 20) model
-
-                [ Space ] ->
-                    update (Fire model.playerPosition) model
-
-                _ ->
-                      ( model, Cmd.none )
+            ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }
+              , Cmd.none
+            )
+            -- let
+            --   pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys
+            -- in
+            --   case pressedKeys of
+            --     [ CharR ] ->
+            --         update (RotatePlayer (degrees 30)) model
+            --
+            --     [ CharA ] ->
+            --         update (MovePlayerHorizontal -20) model
+            --
+            --     [ CharD ] ->
+            --         update (MovePlayerHorizontal 20) model
+            --
+            --     [ Space ] ->
+            --         update (Fire model.playerPosition) model
+            --
+            --     _ ->
+            --          ( model, Cmd.none )
 
         Tick newTime ->
-            update MoveShoots { model | time = newTime }
+          let
+            newShoots = List.map (moveY 50) model.shoots
+            direction = getDirection model.pressedKeys
+          in
+            {model
+            | time = newTime
+            , shoots = newShoots
+            }
+            |> update (MovePlayerHorizontal direction)
+          --  update MoveShoots { model | time = newTime }
 
-        MoveShoots ->
-            let
-              newShoots = map (moveY 20) model.shoots
-            in
-              ( {model | shoots = newShoots }, Cmd.none)
+        -- MoveShoots ->
+        --     let
+        --       newShoots = List.map (moveY 20) model.shoots
+        --     in
+        --       ( {model | shoots = newShoots }, Cmd.none)
 
-        Fire position ->
+        Fire position isShooting ->
             let
-                newFire = Collage.move ( position, -200 ) (Collage.filled red (Collage.rect 2 30))
+                newFire = Collage.move ( position, -160 ) (Collage.filled red (Collage.rect 2 20))
             in
-              ( { model | shoots = ( append model.shoots [ newFire ] ) }, Cmd.none )
+              if isShooting then
+                ( { model | shoots = ( append model.shoots [ newFire ] ) }, Cmd.none )
+              else
+                (model, Cmd.none)
+
+getShooting : List Key -> Bool
+getShooting pressedKeys =
+    if member Space pressedKeys then
+      True
+    else
+      False
+
+
+getDirection : List Key -> Float
+getDirection pressedKeys =
+    if member CharA pressedKeys then
+      (-20)
+    else if member CharD pressedKeys then
+      20
+    else
+      0

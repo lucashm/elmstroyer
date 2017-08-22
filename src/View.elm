@@ -33,6 +33,7 @@ view model =
         [ -- toHtml (fittedImage 400 400 "http://piq.codeus.net/static/media/userpics/piq_378272_400x400.png")
           div [style styleCanvas]
               [ toHtml (Collage.collage 500 500 [ createBackground, (group model.shoots), model.player ] )
+              , Html.text (toString model.pressedKeys)
               ]
 
 
