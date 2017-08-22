@@ -1,5 +1,6 @@
 module Msg exposing (..)
 import Model
+import Collage exposing (rotate)
 
 
 type alias Model =
@@ -7,9 +8,14 @@ type alias Model =
 
 
 type Msg
-    = NoOp
+    = RotatePlayer Float Collage.Form
 
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        RotatePlayer degree object ->
+          let
+            newModel = rotate degree model.player
+          in
+            ( {model | player = newModel}, Cmd.none )
