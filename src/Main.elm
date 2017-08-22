@@ -1,6 +1,7 @@
 module Main exposing (..)
 import Html exposing (Html)
 import Keyboard.Extra exposing (..)
+import Time exposing (..)
 import Model
 import Msg
 import View
@@ -29,5 +30,5 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Sub.map Msg.KeyboardMsg Keyboard.Extra.subscriptions
-        -- ...
+        , Time.every second Msg.Tick
         ]

@@ -32,7 +32,7 @@ view model =
         div [style styleMainDiv]
         [ -- toHtml (fittedImage 400 400 "http://piq.codeus.net/static/media/userpics/piq_378272_400x400.png")
           div [style styleCanvas]
-              [ toHtml (Collage.collage 500 500 [createBackground, model.player])
+              [ toHtml (Collage.collage 500 500 [ createBackground, model.player, model.shots ] )
               ]
 
 

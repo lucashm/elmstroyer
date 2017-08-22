@@ -2,6 +2,8 @@ module Msg exposing (..)
 import Model
 import Collage exposing (..)
 import Keyboard.Extra exposing (Key(..))
+import Time exposing (..)
+import List exposing (..)
 
 
 type alias Model =
@@ -13,6 +15,8 @@ type Msg
     | KeyboardMsg Keyboard.Extra.Msg
     | MovePlayerHorizontal Float
     | UpdatePlayerPosition Float
+    | Tick Time
+    | MoveShots
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -73,3 +77,12 @@ update msg model =
 
                 _ ->
                       ( model, Cmd.none )
+
+        Tick newTime ->
+            update MoveShots { model | time = newTime }
+
+        MoveShots ->
+            let
+              newShots = (moveY 20 model.shots)
+            in
+              ({model | shots = newShots}, Cmd.none)
