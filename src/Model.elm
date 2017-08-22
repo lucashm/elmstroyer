@@ -1,16 +1,23 @@
 module Model exposing (..)
 import Collage exposing (..)
+import Keyboard.Extra exposing (..)
 import Color exposing (red, blue)
 
 type alias Model =
-    {player: Collage.Form}
+    { player: Collage.Form
+    , pressedKeys : List Key
+    , playerPosition : Float
+    }
 
 
 init : Model
 init =
-     {player = createPlayer}
+     { player = createPlayer
+     , pressedKeys = []
+     , playerPosition = 0
+     }
 
 
 createPlayer : Collage.Form
 createPlayer =
-     Collage.filled blue (Collage.ngon 5 30)
+     Collage.rotate (degrees 90) (Collage.move ( 0, -200 ) (Collage.filled blue (Collage.ngon 3 30)))

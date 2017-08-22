@@ -1,5 +1,6 @@
 module Main exposing (..)
 import Html exposing (Html)
+import Keyboard.Extra exposing (..)
 import Model
 import Msg
 import View
@@ -20,5 +21,13 @@ main =
         { view = View.view
         , init = (Model.init, Cmd.none)
         , update = Msg.update
-        , subscriptions = always Sub.none
+        , subscriptions = subscriptions
         }
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Sub.map Msg.KeyboardMsg Keyboard.Extra.subscriptions
+        -- ...
+        ]
