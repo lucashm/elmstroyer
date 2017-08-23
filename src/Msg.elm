@@ -4,7 +4,8 @@ import Collage exposing (..)
 import Keyboard.Extra exposing (Key(..))
 import Time exposing (..)
 import List exposing (..)
-import Color exposing (red)
+import Color exposing (red, purple)
+import Random
 
 type alias Model =
     Model.Model
@@ -18,12 +19,24 @@ type Msg
     | Tick Time
     | Fire Float Bool
     | MoveShoots
+    | MoveEnemies
     | SpinToWin Bool
     | DestroyFire
+    | Spawn Time
+    | ShootTimer Time
+    | RollRandom
+    | NewRandom Int
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
     case msg of
+
+        RollRandom ->
+          (model, Random.generate NewRandom (Random.int (-220) 220))
+
+        NewRandom number ->
+          ({ model | randomNumber = number }, Cmd.none)
+
         RotatePlayer degree ->
           let
             newModel = rotate degree model.player
@@ -79,12 +92,40 @@ update msg model =
             isSpinning = getSpinning model.pressedKeys
           in
             update (MovePlayerHorizontal direction) { model | time = newTime }
-              |> andThen (Fire model.playerPosition isShooting )
+            --  |> andThen (Fire model.playerPosition isShooting )
               |> andThen MoveShoots
               |> andThen DestroyFire
+              |> andThen MoveEnemies
               |> andThen (SpinToWin isSpinning)
 
 
+        ShootTimer newTime ->
+          let
+            isShooting = getShooting model.pressedKeys
+          in
+            update (Fire model.playerPosition isShooting ) {model | time = newTime}
+
+
+        Spawn newTime ->
+          let
+            newEnemy = Collage.rotate (degrees 90) (Collage.move ( (toFloat model.randomNumber) , 220 ) (Collage.filled purple (Collage.ngon 4 30)))
+            newEnemyPosition = ( (toFloat model.randomNumber), 220)
+          in
+            {model
+            | time = newTime
+            , enemies = append model.enemies [ ( newEnemy, newEnemyPosition ) ]
+            } ! []
+            |> andThen RollRandom
+
+
+        MoveEnemies ->
+            let
+              newEnemies = List.map (moveY (-5)) (separeForm model.enemies)
+                            |> List.map (rotate (degrees 15))
+              axis = separeFormCoord model.enemies
+                    |> map updateEnemyPosition
+            in
+              ({model | enemies = zip newEnemies axis}, Cmd.none)
 
         MoveShoots ->
             let
@@ -133,6 +174,9 @@ update msg model =
 
 
 
+
+
+
 filterShoots : ( Form, (Float, Float) ) -> Bool
 filterShoots (shoot, (x,y)) =
   if y > 500 then
@@ -140,6 +184,15 @@ filterShoots (shoot, (x,y)) =
   else
     True
 
+
+updateShootPosition : (Float, Float) -> (Float, Float)
+updateShootPosition (x , y) =
+  (x, y + 25)
+
+
+updateEnemyPosition : (Float, Float) -> (Float, Float)
+updateEnemyPosition (x, y) =
+  (x, y - 5)
 
 
 zip : List a -> List b -> List (a,b)
@@ -151,9 +204,7 @@ zip xs ys =
     (_, _) ->
         []
 
-updateShootPosition : (Float, Float) -> (Float, Float)
-updateShootPosition (x , y) =
-  (x, y + 25)
+
 
 separeForm : List ( Form , (Float, Float) ) -> List Form
 separeForm list =

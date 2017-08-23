@@ -31,4 +31,6 @@ subscriptions model =
     Sub.batch
         [ Sub.map Msg.KeyboardMsg Keyboard.Extra.subscriptions
         , Time.every ((1000/30)*millisecond) Msg.Tick
+        , Time.every (0.5*second) Msg.Spawn
+        , Time.every (200*millisecond) Msg.ShootTimer
         ]
