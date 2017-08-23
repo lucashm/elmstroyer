@@ -18,6 +18,8 @@ type Msg
     | UpdatePlayerPosition Float
     | Tick Time
     | Fire Float Bool
+    | MoveShoots
+    | SpinToWin Bool
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -37,7 +39,7 @@ update msg model =
             case model.playerPosition of
               220 ->
                   case deslocation of
-                      (-20) ->
+                      (-5) ->
                         update (UpdatePlayerPosition deslocation) {model | player = newModel}
 
                       _ ->
@@ -45,7 +47,7 @@ update msg model =
 
               (-220) ->
                   case deslocation of
-                      (-20) ->
+                      (-5) ->
                         (model, Cmd.none)
 
                       _ ->
@@ -61,57 +63,52 @@ update msg model =
             newModel = model.playerPosition + deslocation
             isShooting = getShooting
           in
-            update ( Fire model.playerPosition ( isShooting model.pressedKeys ) ) {model | playerPosition = newModel}
+            {model | playerPosition = newModel} ! []
+
 
         KeyboardMsg keyMsg ->
             ( { model | pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys }
               , Cmd.none
             )
-            -- let
-            --   pressedKeys = Keyboard.Extra.update keyMsg model.pressedKeys
-            -- in
-            --   case pressedKeys of
-            --     [ CharR ] ->
-            --         update (RotatePlayer (degrees 30)) model
-            --
-            --     [ CharA ] ->
-            --         update (MovePlayerHorizontal -20) model
-            --
-            --     [ CharD ] ->
-            --         update (MovePlayerHorizontal 20) model
-            --
-            --     [ Space ] ->
-            --         update (Fire model.playerPosition) model
-            --
-            --     _ ->
-            --          ( model, Cmd.none )
 
+        -- update function, run 30 times per second.
         Tick newTime ->
           let
-            newShoots = List.map (moveY 50) model.shoots
             direction = getDirection model.pressedKeys
+            isShooting = getShooting model.pressedKeys
+            isSpinning = getSpinning model.pressedKeys
           in
-            {model
-            | time = newTime
-            , shoots = newShoots
-            }
-            |> update (MovePlayerHorizontal direction)
-          --  update MoveShoots { model | time = newTime }
+            update (MovePlayerHorizontal direction) { model | time = newTime }
+              |> andThen (MovePlayerHorizontal direction)
+              |> andThen (Fire model.playerPosition isShooting )
+              |> andThen MoveShoots
+              |> andThen (SpinToWin isSpinning)
 
-        -- MoveShoots ->
-        --     let
-        --       newShoots = List.map (moveY 20) model.shoots
-        --     in
-        --       ( {model | shoots = newShoots }, Cmd.none)
+
+        MoveShoots ->
+            let
+              newShoots = List.map (moveY 25) model.shoots
+            in
+              ( {model | shoots = newShoots }, Cmd.none)
+
 
         Fire position isShooting ->
             let
-                newFire = Collage.move ( position, -160 ) (Collage.filled red (Collage.rect 2 20))
+                newFire = Collage.move ( position, -190 ) (Collage.filled red (Collage.rect 3 15))
             in
               if isShooting then
                 ( { model | shoots = ( append model.shoots [ newFire ] ) }, Cmd.none )
               else
                 (model, Cmd.none)
+
+        -- useless but fun
+        SpinToWin isSpinning ->
+            if isSpinning then
+              {model | player = Collage.rotate (degrees 30) model.player} ! []
+            else
+              (model, Cmd.none)
+
+
 
 getShooting : List Key -> Bool
 getShooting pressedKeys =
@@ -120,12 +117,27 @@ getShooting pressedKeys =
     else
       False
 
+getSpinning : List Key -> Bool
+getSpinning pressedKeys =
+    if member CharR pressedKeys then
+      True
+    else
+      False
+
 
 getDirection : List Key -> Float
 getDirection pressedKeys =
     if member CharA pressedKeys then
-      (-20)
+      (-5)
     else if member CharD pressedKeys then
-      20
+      5
     else
       0
+
+andThen : Msg -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+andThen msg ( model, cmd ) =
+    let
+        ( newmodel, newcmd ) =
+            update msg model
+    in
+        newmodel ! [ cmd, newcmd ]
