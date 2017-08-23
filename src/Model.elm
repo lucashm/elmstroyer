@@ -8,7 +8,7 @@ type alias Model =
     { player: Collage.Form
     , pressedKeys : List Key
     , playerPosition : Float
-    , shoots : List Collage.Form
+    , shoots : List (Collage.Form, (Float, Float))
     , time : Time
     }
 
@@ -18,7 +18,7 @@ init =
      { player = createPlayer
      , pressedKeys = []
      , playerPosition = 0
-     , shoots = [ anotherShoot, createShoot ]
+     , shoots = [ (anotherShoot, (0,-200)), (createShoot, (0,0)) ]
      , time = 0
      }
 
