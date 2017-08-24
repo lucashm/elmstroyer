@@ -1,0 +1,25 @@
+{
+  "name": "elmstroyer",
+  "version": "1.0.0",
+  "description": "none",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lucasssm/elmstroyer.git"
+  },
+  "dependencies": {
+    "elm": "^0.18.0"
+  },
+  "author": "lucasssm",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lucasssm/elmstroyer/issues"
+  },
+  "homepage": "https://github.com/lucasssm/elmstroyer#readme"
+}
