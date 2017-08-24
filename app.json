@@ -1,8 +1,8 @@
 {
     "name": "Elmstroyer",
-    "repository": "https://github.com/srid/elm-todomvc",
+    "repository": "https://github.com/lucasssm/elmstroyer",
     "env": {
-        "ELM_COMPILE": "elm make src/Main.elm --output elm.js"
+        "ELM_COMPILE": "elm make src/Main.elm"
     },
     "buildpacks": [
         {

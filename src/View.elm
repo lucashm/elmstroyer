@@ -42,6 +42,7 @@ view model =
               [ toHtml (Collage.collage 500 500 [ createBackground, (group shoots), model.player, (group enemies) ] )
               , Html.text (toString model.pressedKeys)
               -- , Html.text ( toString ( input ) )
+              , div [] [Html.audio [ src "http://www.kpsearch.com/df/fitness4younew/Darude-Sandstorm.mp3", controls True ] []]
               ]
 
 
