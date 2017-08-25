@@ -26,6 +26,7 @@ type Msg
     | ShootTimer Time
     | RollRandom
     | NewRandom Int
+    | DestroyEnemy
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -96,6 +97,7 @@ update msg model =
               |> andThen MoveShoots
               |> andThen DestroyFire
               |> andThen MoveEnemies
+              |> andThen DestroyEnemy
               |> andThen (SpinToWin isSpinning)
 
 
@@ -162,6 +164,15 @@ update msg model =
                | shoots = getShoot
                }, Cmd.none)
 
+        DestroyEnemy ->
+            let
+              getEnemy =
+                    filter filterEnemies model.enemies
+            in
+              ({ model
+               | enemies = getEnemy
+               }, Cmd.none)
+
 
 
         -- useless but fun
@@ -175,6 +186,13 @@ update msg model =
 
 
 
+
+filterEnemies : ( Form, (Float, Float) ) -> Bool
+filterEnemies (enemie, (x,y)) =
+  if y < -500 then
+    False
+  else
+    True
 
 
 filterShoots : ( Form, (Float, Float) ) -> Bool
