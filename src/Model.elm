@@ -1,5 +1,6 @@
 module Model exposing (..)
 import Collage exposing (..)
+import Element exposing (..)
 import Keyboard.Extra exposing (..)
 import Color exposing (red, blue, purple)
 import Time exposing (..)
@@ -12,6 +13,7 @@ type alias Model =
     , time : Time
     , enemies : List (Collage.Form, (Float, Float))
     , randomNumber : Int
+    , background : Collage.Form
     }
 
 
@@ -20,25 +22,22 @@ init =
      { player = createPlayer
      , pressedKeys = []
      , playerPosition = 0
-     , shoots = [ (anotherShoot, (0,-200)), (createShoot, (0,0)) ]
+     , shoots = []
      , time = 0
-     , enemies = [(createEnemy, (0,0))]
+     , enemies = []
      , randomNumber = 0
+     , background = createBackground
      }
-
-createEnemy : Collage.Form
-createEnemy =
-      Collage.rotate (degrees 90) (Collage.move ( 0, 220 ) (Collage.filled purple (Collage.ngon 4 30)))
-
 
 createPlayer : Collage.Form
 createPlayer =
-     Collage.rotate (degrees 90) (Collage.move ( 0, -200 ) (Collage.filled blue (Collage.ngon 3 30)))
+     fittedImage 41 34 "https://cdn.discordapp.com/attachments/204397763637673984/351483067153645569/navezinha.gif"
+      |> toForm
+      |> Collage.move (0, -200)
 
-createShoot : Collage.Form
-createShoot =
-    Collage.filled red (Collage.rect 2 30)
 
-anotherShoot : Collage.Form
-anotherShoot =
-    Collage.move ( 0, -200 ) (Collage.filled red (Collage.rect 2 30))
+
+createBackground : Collage.Form
+createBackground =
+    fittedImage 500 500 "https://media.giphy.com/media/ZiDpJRogbB9V6/giphy.gif"
+      |> toForm

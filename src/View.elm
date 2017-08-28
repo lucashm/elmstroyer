@@ -39,19 +39,10 @@ view model =
         div [style styleMainDiv]
         [ -- toHtml (fittedImage 400 400 "http://piq.codeus.net/static/media/userpics/piq_378272_400x400.png")
           div [style styleCanvas]
-              [ toHtml (Collage.collage 500 500 [ createBackground, (group shoots), model.player, (group enemies) ] )
+              [ toHtml (Collage.collage 500 500 [ model.background, (group shoots), model.player, (group enemies) ] )
               , Html.text (toString model.pressedKeys)
               -- , Html.text ( toString ( input ) )
               ]
 
 
         ]
-
-
-
-createBackground : Collage.Form
-createBackground =
-    toForm (fittedImage 500 500 "https://media.giphy.com/media/ZiDpJRogbB9V6/giphy.gif")
-
--- createPlayer =
---     Collage.filled red (Collage.square 30)
