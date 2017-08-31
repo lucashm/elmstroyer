@@ -28,7 +28,7 @@ type Msg
     | RollRandom
     | NewRandom Int
     | DestroyEnemy
---    | HitEnemy Time
+    | HitEnemy
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -191,11 +191,16 @@ update msg model =
 
 
 
-        -- HitEnemy newTime ->
-        --   let
-        --     newEnemies = ifEnemyHit model.enemies model.shoots
-        --   in
-        --     { model | enemies = newEnemies, time = newTime } ! []
+        HitEnemy ->
+          let
+            (enemies, coord) = unzip model.enemies
+            (form_, hitbox) = unzip enemies
+            test = List.filter (filterHit (separeCollision model.shoots)) hitbox
+            firstZip = zip form_ test
+            secondZip = zip firstZip coord
+          in
+
+            { model | enemies = secondZip } ! []
 
         -- useless but fun
         SpinToWin isSpinning ->
@@ -210,6 +215,8 @@ update msg model =
 
 
 
+
+
 moveCollision : Float -> Float -> Float -> (Float, Float) -> Collision2D.Rectangle
 moveCollision moving width_ height_  axis =
   let
@@ -218,18 +225,33 @@ moveCollision moving width_ height_  axis =
   in
     newCollision
 
--- ifEnemyHit listEnemy listFire =
---   filter (isHit listFire) listEnemy
 
 
-isHit listFire (enemy, (x,y)) =
-  let
-    coordFire = separeFormCoord listFire
-  in
-    if member (x,y) coordFire then
+
+filterHit : List Collision2D.Rectangle -> Collision2D.Rectangle -> Bool
+filterHit fire enemy =
+--  List.filter (checkEnemyHit shoot) enemies
+  case head fire of
+    Just head_ ->
+      case Collision2D.axisAlignedBoundingBox enemy head_ of
+        True ->
+          True
+
+        False ->
+          case tail fire of
+            Just fire ->
+              filterHit fire enemy
+            Nothing ->
+              False
+    Nothing ->
       False
-    else
-      True
+
+  -- if Collision2D.axisAlignedBoundingBox enemy (head fire) then
+  --   True
+  -- else
+  --   filterHit enemy (tail fire)
+
+
 
 filterEnemies : ( (Form, Collision2D.Rectangle), (Float, Float) ) -> Bool
 filterEnemies (enemy, (x,y)) =
@@ -245,8 +267,6 @@ filterShoots (shoot, (x,y)) =
     False
   else
     True
-
-
 
 
 

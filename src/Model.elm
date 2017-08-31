@@ -14,6 +14,7 @@ type alias Model =
     , enemies : List ((Collage.Form, Rectangle), (Float, Float))
     , randomNumber : Int
     , background : Collage.Form
+    , score : Int
     }
 
 
@@ -27,6 +28,7 @@ init =
      , enemies = []
      , randomNumber = 0
      , background = createBackground
+     , score = 0
      }
 
 
