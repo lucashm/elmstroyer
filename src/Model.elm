@@ -9,9 +9,9 @@ type alias Model =
     { player: (Collage.Form, Rectangle)
     , pressedKeys : List Key
     , playerPosition : Float
-    , shoots : List (Collage.Form, (Float, Float))
+    , shoots : List ((Collage.Form, Rectangle), (Float, Float))
     , time : Time
-    , enemies : List (Collage.Form, (Float, Float))
+    , enemies : List ((Collage.Form, Rectangle), (Float, Float))
     , randomNumber : Int
     , background : Collage.Form
     }

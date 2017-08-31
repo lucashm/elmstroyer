@@ -28,7 +28,7 @@ type Msg
     | RollRandom
     | NewRandom Int
     | DestroyEnemy
-    | HitEnemy Time
+--    | HitEnemy Time
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -116,12 +116,16 @@ update msg model =
 
         Spawn newTime ->
           let
-            newEnemy = (Collage.move ( (toFloat model.randomNumber) , 220 ) (Collage.filled purple (Collage.ngon 4 30)))
+            newEnemy = Collage.square 40
+                        |> Collage.filled purple
+                        |> Collage.move ( (toFloat model.randomNumber) , 220 )
             newEnemyPosition = ( (toFloat model.randomNumber), 220)
+            newCollision = Collision2D.rectangle (toFloat model.randomNumber) 220 40 40
+
           in
             {model
             | time = newTime
-            , enemies = append model.enemies [ ( newEnemy, newEnemyPosition ) ]
+            , enemies = append model.enemies [ ( (newEnemy, newCollision), newEnemyPosition ) ]
             } ! []
             |> andThen RollRandom
 
@@ -132,8 +136,11 @@ update msg model =
 
               axis = separeFormCoord model.enemies
                     |> map updateEnemyPosition
+
+              newEnemiesCollision = List.map (moveCollision -5 40 40) (separeFormCoord model.enemies)
+
             in
-              ({model | enemies = zip newEnemies axis}, Cmd.none)
+              ({model | enemies = zip (zip newEnemies newEnemiesCollision) axis}, Cmd.none)
 
         MoveShoots ->
             let
@@ -142,9 +149,11 @@ update msg model =
                   separeFormCoord model.shoots
                   |> map updateShootPosition
 
+              newShootsCollision = List.map (moveCollision 25 3 15) (separeFormCoord model.shoots)
+
             in
               ( {model
-                | shoots =  zip newShoots axis
+                | shoots =  zip (zip newShoots newShootsCollision) axis
                 } , Cmd.none)
 
 
@@ -152,10 +161,11 @@ update msg model =
             let
                 newFire = Collage.move ( position, -190 ) (Collage.filled red (Collage.rect 3 15))
                 newFirePosition = (position, -190)
+                newFireCollision = Collision2D.rectangle position -190 3 15
             in
               if isShooting then
                 ( { model
-                  | shoots = ( append model.shoots [ ( newFire, ( position, -190 ) ) ] )
+                  | shoots = ( append model.shoots [((newFire, newFireCollision), (position, -190))] )
                   }, Cmd.none )
               else
                 (model, Cmd.none)
@@ -181,11 +191,11 @@ update msg model =
 
 
 
-        HitEnemy newTime ->
-          let
-            newEnemies = ifEnemyHit model.enemies model.shoots
-          in
-            { model | enemies = newEnemies, time = newTime } ! []
+        -- HitEnemy newTime ->
+        --   let
+        --     newEnemies = ifEnemyHit model.enemies model.shoots
+        --   in
+        --     { model | enemies = newEnemies, time = newTime } ! []
 
         -- useless but fun
         SpinToWin isSpinning ->
@@ -200,9 +210,16 @@ update msg model =
 
 
 
+moveCollision : Float -> Float -> Float -> (Float, Float) -> Collision2D.Rectangle
+moveCollision moving width_ height_  axis =
+  let
+    (x,y) = axis
+    newCollision = Collision2D.rectangle  x (y + moving) width_ height_
+  in
+    newCollision
 
-ifEnemyHit listEnemy listFire =
-  filter (isHit listFire) listEnemy
+-- ifEnemyHit listEnemy listFire =
+--   filter (isHit listFire) listEnemy
 
 
 isHit listFire (enemy, (x,y)) =
@@ -214,7 +231,7 @@ isHit listFire (enemy, (x,y)) =
     else
       True
 
-filterEnemies : ( Form, (Float, Float) ) -> Bool
+filterEnemies : ( (Form, Collision2D.Rectangle), (Float, Float) ) -> Bool
 filterEnemies (enemy, (x,y)) =
   if y < -500 then
     False
@@ -222,7 +239,7 @@ filterEnemies (enemy, (x,y)) =
     True
 
 
-filterShoots : ( Form, (Float, Float) ) -> Bool
+filterShoots : ( (Form, Collision2D.Rectangle), (Float, Float) ) -> Bool
 filterShoots (shoot, (x,y)) =
   if y > 500 then
     False
@@ -254,24 +271,29 @@ zip xs ys =
 
 
 
-separeForm : List ( Form , (Float, Float) ) -> List Form
+separeForm : List ( (Form, Collision2D.Rectangle) , (Float, Float) ) -> List Form
 separeForm list =
     let
       (a,b) = unzip list
+      (form_, collision) = unzip a
     in
-      a
+      form_
 
-separeFormCoord : List ( Form , (Float, Float) ) -> List (Float, Float)
+separeFormCoord : List ( (Form, Collision2D.Rectangle), (Float, Float) ) -> List (Float, Float)
 separeFormCoord list =
     let
       (a,b) = unzip list
     in
       b
 
+separeCollision : List ( (Form, Collision2D.Rectangle) , (Float, Float) ) -> List Collision2D.Rectangle
+separeCollision list =
+    let
+      (a,b) = unzip list
+      (form_, collision) = unzip a
+    in
+      collision
 
-changeShootPosition : ( Float, Float ) -> ( Float, Float )
-changeShootPosition (x,y) =
-  (x, (y + 25))
 
 getShooting : List Key -> Bool
 getShooting pressedKeys =
