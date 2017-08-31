@@ -6,6 +6,7 @@ import Time exposing (..)
 import List exposing (..)
 import Color exposing (red, purple)
 import Random
+import Collision2D
 
 type alias Model =
     Model.Model
@@ -27,6 +28,7 @@ type Msg
     | RollRandom
     | NewRandom Int
     | DestroyEnemy
+    | HitEnemy Time
 
 update : Msg -> Model.Model -> ( Model.Model, Cmd Msg )
 update msg model =
@@ -40,21 +42,23 @@ update msg model =
 
         RotatePlayer degree ->
           let
-            newModel = rotate degree model.player
+            (player, collision) = model.player
+            newModel = rotate degree player
           in
-            ( {model | player = newModel}, Cmd.none )
+            ( {model | player = (newModel, collision)}, Cmd.none )
 
 
         MovePlayerHorizontal deslocation ->
           let
-            newModel = moveX deslocation model.player
+            (player, collision) = model.player
+            newModel = moveX deslocation player
           in
           -- Needed to limit player movement
             case model.playerPosition of
               220 ->
                   case deslocation of
                       (-5) ->
-                        update (UpdatePlayerPosition deslocation) {model | player = newModel}
+                        update (UpdatePlayerPosition deslocation) {model | player = (newModel, collision)}
 
                       _ ->
                         (model, Cmd.none)
@@ -65,19 +69,21 @@ update msg model =
                         (model, Cmd.none)
 
                       _ ->
-                        update (UpdatePlayerPosition deslocation) {model | player = newModel}
+                        update (UpdatePlayerPosition deslocation) {model | player = (newModel, collision)}
 
 
               _ ->
-                  update (UpdatePlayerPosition deslocation) {model | player = newModel}
+                  update (UpdatePlayerPosition deslocation) {model | player = (newModel, collision)}
 
 
         UpdatePlayerPosition deslocation ->
           let
             newModel = model.playerPosition + deslocation
+            (player, collision) = model.player
+            newCollision = Collision2D.rectangle newModel 0 41 34
             isShooting = getShooting
           in
-            {model | playerPosition = newModel} ! []
+            {model | playerPosition = newModel, player = (player, newCollision)} ! []
 
 
         KeyboardMsg keyMsg ->
@@ -110,7 +116,7 @@ update msg model =
 
         Spawn newTime ->
           let
-            newEnemy = Collage.rotate (degrees 90) (Collage.move ( (toFloat model.randomNumber) , 220 ) (Collage.filled purple (Collage.ngon 4 30)))
+            newEnemy = (Collage.move ( (toFloat model.randomNumber) , 220 ) (Collage.filled purple (Collage.ngon 4 30)))
             newEnemyPosition = ( (toFloat model.randomNumber), 220)
           in
             {model
@@ -123,7 +129,7 @@ update msg model =
         MoveEnemies ->
             let
               newEnemies = List.map (moveY (-5)) (separeForm model.enemies)
-                            |> List.map (rotate (degrees 15))
+
               axis = separeFormCoord model.enemies
                     |> map updateEnemyPosition
             in
@@ -175,10 +181,19 @@ update msg model =
 
 
 
+        HitEnemy newTime ->
+          let
+            newEnemies = ifEnemyHit model.enemies model.shoots
+          in
+            { model | enemies = newEnemies, time = newTime } ! []
+
         -- useless but fun
         SpinToWin isSpinning ->
+          let
+            (player, collision) = model.player
+          in
             if isSpinning then
-              {model | player = Collage.rotate (degrees 30) model.player} ! []
+              {model | player = (Collage.rotate (degrees 30) player, collision)} ! []
             else
               (model, Cmd.none)
 
@@ -186,9 +201,21 @@ update msg model =
 
 
 
+ifEnemyHit listEnemy listFire =
+  filter (isHit listFire) listEnemy
+
+
+isHit listFire (enemy, (x,y)) =
+  let
+    coordFire = separeFormCoord listFire
+  in
+    if member (x,y) coordFire then
+      False
+    else
+      True
 
 filterEnemies : ( Form, (Float, Float) ) -> Bool
-filterEnemies (enemie, (x,y)) =
+filterEnemies (enemy, (x,y)) =
   if y < -500 then
     False
   else
@@ -201,6 +228,9 @@ filterShoots (shoot, (x,y)) =
     False
   else
     True
+
+
+
 
 
 updateShootPosition : (Float, Float) -> (Float, Float)
